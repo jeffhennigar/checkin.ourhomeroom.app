@@ -598,7 +598,7 @@
         let sessionCode = '';
         let studentName = '';
         let channel = null;
-        let currentConfig = { type: 'text', question: '', options: [], isActive: false };
+        let currentConfig = { type: 'text', question: '', options: [], isActive: false, isStarted: false };
         let selectedMcAnswer = '';
         let hasReceivedConfig = false;
 
@@ -671,10 +671,33 @@
                 channel.on('broadcast', { event: 'config' }, (payload) => {
                     hasReceivedConfig = true;
                     currentConfig = payload.payload;
-                    // If student is on waiting screen and question is now active, show it
-                    if (document.getElementById('step-waiting').classList.contains('active') && currentConfig.isActive && currentConfig.question) {
+
+                    // Update waiting subtitle if state changes while in waiting
+                    if (document.getElementById('step-waiting').classList.contains('active')) {
+                        const subtitle = document.querySelector('#step-waiting .subtitle');
+                        if (currentConfig.isActive && !currentConfig.isStarted) {
+                            subtitle.textContent = "Waiting for the teacher to start the session...";
+                        } else {
+                            subtitle.textContent = "Waiting for your teacher to send the question...";
+                        }
+                    }
+
+                    // If student is on waiting screen and session is now started, show it
+                    if (document.getElementById('step-waiting').classList.contains('active') && currentConfig.isActive && currentConfig.isStarted && currentConfig.question) {
                         showQuestion();
                     }
+
+                    // If session ends, show a message or reset
+                    if (!currentConfig.isActive && hasReceivedConfig) {
+                        if (!document.getElementById('step-code').classList.contains('active')) {
+                            showError('error-code', 'The teacher has ended this session.');
+                            showStep('step-code');
+                        }
+                    }
+                });
+
+                channel.on('presence', { event: 'sync' }, () => {
+                    // Sync presence
                 });
 
                 await channel.subscribe();
@@ -724,12 +747,23 @@
             studentName = name;
             localStorage.setItem('homeroom_student_name', name);
 
-            // If we already have an active question, show it
-            if (currentConfig.isActive && currentConfig.question) {
+            // If session is already started, show it
+            if (currentConfig.isActive && currentConfig.isStarted && currentConfig.question) {
                 showQuestion();
             } else {
                 // Show waiting screen
+                const subtitle = document.querySelector('#step-waiting .subtitle');
+                if (currentConfig.isActive && !currentConfig.isStarted) {
+                    subtitle.textContent = "Waiting for the teacher to start the session...";
+                } else {
+                    subtitle.textContent = "Waiting for your teacher to send the question...";
+                }
                 showStep('step-waiting');
+
+                // Track presence once we have a name and are in the lobby/waiting
+                if (channel) {
+                    channel.track({ name: studentName, joined_at: new Date().toISOString() });
+                }
             }
         }
 
