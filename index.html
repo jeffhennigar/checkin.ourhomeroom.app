@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Check In — HomeRoom</title>
+    <meta name="description" content="Join your teacher's session and submit your answers in real-time.">
+    <link rel="icon" href="https://free.ourhomeroom.app/homeroom-logo.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --navy: #2d3261;
+            --indigo: #4f46e5;
+            --indigo-light: #6366f1;
+            --indigo-bg: #eef2ff;
+            --orange: #f97316;
+            --orange-light: #fed7aa;
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-300: #cbd5e1;
+            --slate-400: #94a3b8;
+            --slate-500: #64748b;
+            --slate-600: #475569;
+            --slate-700: #334155;
+            --slate-800: #1e293b;
+            --green: #22c55e;
+            --green-bg: #dcfce7;
+            --red: #ef4444;
+            --red-bg: #fef2f2;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Lexend', sans-serif;
+            background: linear-gradient(135deg, #eef2ff 0%, #faf5ff 30%, #fff7ed 100%);
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* Floating background orbs */
+        body::before,
+        body::after {
+            content: '';
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        body::before {
+            width: 300px;
+            height: 300px;
+            background: var(--indigo-bg);
+            top: -50px;
+            right: -50px;
+        }
+
+        body::after {
+            width: 250px;
+            height: 250px;
+            background: var(--orange-light);
+            bottom: -30px;
+            left: -30px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Logo */
+        .logo-area {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .logo-area img {
+            height: 48px;
+            object-fit: contain;
+        }
+
+        /* Card */
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 40px 32px;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Steps */
+        .step {
+            display: none;
+            animation: fadeSlideIn 0.4s ease-out;
+        }
+
+        .step.active {
+            display: block;
+        }
+
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Headings */
+        h1 {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--navy);
+            text-align: center;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: var(--slate-500);
+            text-align: center;
+            margin-bottom: 28px;
+            line-height: 1.5;
+        }
+
+        /* Inputs */
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--slate-400);
+            margin-bottom: 8px;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid var(--slate-200);
+            border-radius: 16px;
+            font-family: 'Lexend', sans-serif;
+            font-size: 16px;
+            color: var(--slate-800);
+            background: var(--slate-50);
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus {
+            border-color: var(--indigo);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.08);
+        }
+
+        input.code-input {
+            font-size: 28px;
+            font-weight: 700;
+            text-align: center;
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            padding: 20px;
+            font-family: 'Lexend', monospace;
+        }
+
+        input.code-input::placeholder {
+            letter-spacing: 4px;
+            font-size: 18px;
+            font-weight: 400;
+        }
+
+        textarea {
+            resize: none;
+            min-height: 120px;
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 16px 24px;
+            border: none;
+            border-radius: 16px;
+            font-family: 'Lexend', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-primary {
+            background: var(--indigo);
+            color: white;
+            box-shadow: 0 4px 16px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--indigo-light);
+            box-shadow: 0 6px 24px rgba(79, 70, 229, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-orange {
+            background: var(--orange);
+            color: white;
+            box-shadow: 0 4px 16px rgba(249, 115, 22, 0.3);
+        }
+
+        .btn-orange:hover:not(:disabled) {
+            background: #ea580c;
+            box-shadow: 0 6px 24px rgba(249, 115, 22, 0.4);
+            transform: translateY(-1px);
+        }
+
+        /* Question card */
+        .question-card {
+            background: var(--indigo-bg);
+            border: 2px solid #c7d2fe;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .question-label {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--indigo);
+            margin-bottom: 8px;
+        }
+
+        .question-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--navy);
+            line-height: 1.4;
+        }
+
+        /* MC Options */
+        .mc-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .mc-option {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid var(--slate-200);
+            border-radius: 14px;
+            background: var(--slate-50);
+            font-family: 'Lexend', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--slate-700);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-align: left;
+        }
+
+        .mc-option:hover {
+            border-color: var(--indigo);
+            background: white;
+        }
+
+        .mc-option.selected {
+            border-color: var(--indigo);
+            background: var(--indigo-bg);
+            color: var(--indigo);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .mc-option .letter {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            background: var(--slate-200);
+            color: var(--slate-500);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+
+        .mc-option.selected .letter {
+            background: var(--indigo);
+            color: white;
+        }
+
+        /* Error */
+        .error-msg {
+            background: var(--red-bg);
+            color: var(--red);
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            text-align: center;
+            display: none;
+        }
+
+        .error-msg.visible {
+            display: block;
+            animation: fadeSlideIn 0.3s ease-out;
+        }
+
+        /* Success */
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--green-bg);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 40px;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0);
+            }
+
+            80% {
+                transform: scale(1.15);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .link-btn {
+            background: none;
+            border: none;
+            color: var(--indigo);
+            font-family: 'Lexend', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 8px;
+            margin-top: 8px;
+        }
+
+        .link-btn:hover {
+            text-decoration: underline;
+        }
+
+        /* Waiting pulse */
+        .waiting-dots {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            margin: 16px 0;
+        }
+
+        .waiting-dots span {
+            width: 10px;
+            height: 10px;
+            background: var(--indigo);
+            border-radius: 50%;
+            animation: pulse 1.2s ease-in-out infinite;
+        }
+
+        .waiting-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .waiting-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 0.3;
+                transform: scale(0.8);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.1);
+            }
+        }
+
+        /* Name greeting */
+        .greeting {
+            font-size: 13px;
+            color: var(--slate-400);
+            text-align: center;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 11px;
+            color: var(--slate-400);
+            font-weight: 500;
+        }
+
+        .footer a {
+            color: var(--indigo);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            body {
+                padding: 16px;
+            }
+
+            .card {
+                padding: 32px 24px;
+                border-radius: 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            input.code-input {
+                font-size: 24px;
+                letter-spacing: 6px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="logo-area">
+            <img src="https://free.ourhomeroom.app/homeroom-logo.png" alt="HomeRoom">
+        </div>
+
+        <div class="card">
+            <!-- STEP 1: Enter Class Code -->
+            <div id="step-code" class="step active">
+                <h1>Check In! 📋</h1>
+                <p class="subtitle">Enter the class code your teacher shared</p>
+                <div id="error-code" class="error-msg"></div>
+                <div class="input-group">
+                    <label>Class Code</label>
+                    <input type="text" id="code-input" class="code-input" placeholder="ABC123" maxlength="10"
+                        autocomplete="off" spellcheck="false" autofocus>
+                </div>
+                <button id="btn-join" class="btn btn-primary" onclick="joinSession()">
+                    Join →
+                </button>
+            </div>
+
+            <!-- STEP 2: Enter Name -->
+            <div id="step-name" class="step">
+                <h1>Hey there! 👋</h1>
+                <p class="subtitle">What's your first name?</p>
+                <div id="error-name" class="error-msg"></div>
+                <div class="input-group">
+                    <label>First Name</label>
+                    <input type="text" id="name-input" placeholder="Your name" autocomplete="given-name">
+                </div>
+                <button id="btn-name" class="btn btn-orange" onclick="submitName()">
+                    Let's go! 🚀
+                </button>
+            </div>
+
+            <!-- STEP 3: Waiting for question -->
+            <div id="step-waiting" class="step">
+                <h1>You're in! ✨</h1>
+                <p class="subtitle">Waiting for your teacher to send the question...</p>
+                <div class="waiting-dots">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+
+            <!-- STEP 4: Answer Question -->
+            <div id="step-question" class="step">
+                <p class="greeting" id="greeting-text"></p>
+                <h1 id="question-heading">Your Question</h1>
+
+                <div class="question-card">
+                    <div class="question-label">📝 Question</div>
+                    <div class="question-text" id="question-display"></div>
+                </div>
+
+                <div id="error-answer" class="error-msg"></div>
+
+                <!-- Text answer -->
+                <div id="text-answer-area" class="input-group">
+                    <label>Your Answer</label>
+                    <textarea id="answer-text" placeholder="Type your answer here..."></textarea>
+                </div>
+
+                <!-- MC answer -->
+                <div id="mc-answer-area" class="mc-options" style="display:none;"></div>
+
+                <button id="btn-submit" class="btn btn-primary" onclick="submitAnswer()">
+                    Send Answer 🎯
+                </button>
+            </div>
+
+            <!-- STEP 5: Success -->
+            <div id="step-done" class="step">
+                <div class="success-icon">✅</div>
+                <h1>Sent!</h1>
+                <p class="subtitle">Your answer has been submitted to your teacher.</p>
+                <button class="link-btn" onclick="resetForAnother()">Submit another answer?</button>
+            </div>
+        </div>
+
+        <div class="footer">
+            Powered by <a href="https://ourhomeroom.app" target="_blank">HomeRoom</a>
+        </div>
+    </div>
+
+    <script>
+        // --- Supabase Setup ---
+        const supabaseClient = window.supabase.createClient(
+            'https://lguewieabkrjgsobufjd.supabase.co',
+            'sb_publishable_5GO3bYshKEh_MWebMvDCiQ_Ti7ivGWO'
+        );
+
+        // --- State ---
+        let sessionCode = '';
+        let studentName = '';
+        let channel = null;
+        let currentConfig = { type: 'text', question: '', options: [], isActive: false };
+        let selectedMcAnswer = '';
+        let hasReceivedConfig = false;
+
+        // --- Check URL for pre-filled code ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const prefilledCode = urlParams.get('code');
+        if (prefilledCode) {
+            document.getElementById('code-input').value = prefilledCode.toUpperCase();
+        }
+
+        // --- Load saved name ---
+        const savedName = localStorage.getItem('homeroom_student_name');
+        if (savedName) {
+            document.getElementById('name-input').value = savedName;
+        }
+
+        // --- Enter key handlers ---
+        document.getElementById('code-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') joinSession();
+        });
+        document.getElementById('name-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') submitName();
+        });
+        document.getElementById('answer-text').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitAnswer(); }
+        });
+
+        // --- Auto-uppercase code input ---
+        document.getElementById('code-input').addEventListener('input', (e) => {
+            e.target.value = e.target.value.toUpperCase();
+        });
+
+        // --- Step Management ---
+        function showStep(stepId) {
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            const step = document.getElementById(stepId);
+            // Force re-animation
+            step.style.animation = 'none';
+            step.offsetHeight; // trigger reflow
+            step.style.animation = '';
+            step.classList.add('active');
+        }
+
+        function showError(id, msg) {
+            const el = document.getElementById(id);
+            el.textContent = msg;
+            el.classList.add('visible');
+            setTimeout(() => el.classList.remove('visible'), 5000);
+        }
+
+        // --- STEP 1: Join Session ---
+        async function joinSession() {
+            const code = document.getElementById('code-input').value.trim().toLowerCase();
+            if (!code) {
+                showError('error-code', 'Please enter a class code');
+                return;
+            }
+
+            const btn = document.getElementById('btn-join');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Connecting...';
+
+            sessionCode = code;
+
+            try {
+                // Connect to the channel
+                channel = supabaseClient.channel(`exit_ticket:${sessionCode}`);
+
+                // Listen for config broadcasts from the teacher
+                channel.on('broadcast', { event: 'config' }, (payload) => {
+                    hasReceivedConfig = true;
+                    currentConfig = payload.payload;
+                    // If student is on waiting screen and question is now active, show it
+                    if (document.getElementById('step-waiting').classList.contains('active') && currentConfig.isActive && currentConfig.question) {
+                        showQuestion();
+                    }
+                });
+
+                await channel.subscribe();
+
+                // Wait up to 6 seconds for a config broadcast
+                await new Promise((resolve) => {
+                    const checkInterval = setInterval(() => {
+                        if (hasReceivedConfig) {
+                            clearInterval(checkInterval);
+                            resolve();
+                        }
+                    }, 300);
+                    setTimeout(() => {
+                        clearInterval(checkInterval);
+                        resolve();
+                    }, 6000);
+                });
+
+                if (!hasReceivedConfig) {
+                    // No config received — might still be valid, teacher just hasn't broadcast yet
+                    // Let them through anyway
+                }
+
+                btn.disabled = false;
+                btn.innerHTML = 'Join →';
+
+                // Move to name step
+                showStep('step-name');
+                document.getElementById('name-input').focus();
+
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = 'Join →';
+                showError('error-code', 'Connection error. Please try again.');
+                console.error('Join error:', err);
+            }
+        }
+
+        // --- STEP 2: Submit Name ---
+        function submitName() {
+            const name = document.getElementById('name-input').value.trim();
+            if (!name) {
+                showError('error-name', 'Please enter your first name');
+                return;
+            }
+
+            studentName = name;
+            localStorage.setItem('homeroom_student_name', name);
+
+            // If we already have an active question, show it
+            if (currentConfig.isActive && currentConfig.question) {
+                showQuestion();
+            } else {
+                // Show waiting screen
+                showStep('step-waiting');
+            }
+        }
+
+        // --- STEP 3: Show Question ---
+        function showQuestion() {
+            document.getElementById('greeting-text').textContent = `Hi ${studentName}! 👋`;
+            document.getElementById('question-display').textContent = currentConfig.question;
+            document.getElementById('question-heading').textContent = currentConfig.type === 'mc' ? 'Pick One' : 'Your Question';
+
+            if (currentConfig.type === 'mc') {
+                document.getElementById('text-answer-area').style.display = 'none';
+                const mcArea = document.getElementById('mc-answer-area');
+                mcArea.style.display = 'flex';
+                mcArea.innerHTML = '';
+                selectedMcAnswer = '';
+
+                (currentConfig.options || []).forEach((opt, i) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'mc-option';
+                    btn.innerHTML = `<span class="letter">${String.fromCharCode(65 + i)}</span>${opt}`;
+                    btn.onclick = () => {
+                        selectedMcAnswer = opt;
+                        mcArea.querySelectorAll('.mc-option').forEach(b => b.classList.remove('selected'));
+                        btn.classList.add('selected');
+                    };
+                    mcArea.appendChild(btn);
+                });
+            } else {
+                document.getElementById('text-answer-area').style.display = 'block';
+                document.getElementById('mc-answer-area').style.display = 'none';
+                document.getElementById('answer-text').value = '';
+            }
+
+            showStep('step-question');
+        }
+
+        // --- STEP 4: Submit Answer ---
+        async function submitAnswer() {
+            const answer = currentConfig.type === 'mc' ? selectedMcAnswer : document.getElementById('answer-text').value.trim();
+
+            if (!answer) {
+                showError('error-answer', currentConfig.type === 'mc' ? 'Please select an answer' : 'Please type your answer');
+                return;
+            }
+
+            const btn = document.getElementById('btn-submit');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Sending...';
+
+            try {
+                // Create a fresh channel to send the answer
+                const sendChannel = supabaseClient.channel(`exit_ticket:${sessionCode}`);
+                await new Promise((resolve, reject) => {
+                    sendChannel.subscribe(async (status) => {
+                        if (status === 'SUBSCRIBED') {
+                            await sendChannel.send({
+                                type: 'broadcast',
+                                event: 'answer',
+                                payload: { name: studentName, answer: answer, timestamp: Date.now() }
+                            });
+                            resolve();
+                        }
+                    });
+                    setTimeout(() => reject(new Error('Timeout')), 8000);
+                });
+
+                // Cleanup
+                supabaseClient.removeChannel(sendChannel);
+
+                // Show success
+                showStep('step-done');
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = 'Send Answer 🎯';
+                showError('error-answer', 'Failed to send. Please try again.');
+                console.error('Submit error:', err);
+            }
+        }
+
+        // --- Reset for another answer ---
+        function resetForAnother() {
+            selectedMcAnswer = '';
+            document.getElementById('answer-text').value = '';
+            const btn = document.getElementById('btn-submit');
+            btn.disabled = false;
+            btn.innerHTML = 'Send Answer 🎯';
+
+            // If there's still an active question, go back to it
+            if (currentConfig.isActive && currentConfig.question) {
+                showQuestion();
+            } else {
+                showStep('step-waiting');
+            }
+        }
+    </script>
+</body>
+
+</html>
