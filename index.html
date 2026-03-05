@@ -850,24 +850,12 @@
             btn.innerHTML = '<span class="spinner"></span> Sending...';
 
             try {
-                // Create a fresh channel to send the answer
-                const sendChannel = supabaseClient.channel(`exit_ticket:${sessionCode}`);
-                await new Promise((resolve, reject) => {
-                    sendChannel.subscribe(async (status) => {
-                        if (status === 'SUBSCRIBED') {
-                            await sendChannel.send({
-                                type: 'broadcast',
-                                event: 'answer',
-                                payload: { name: studentName, answer: answer, timestamp: Date.now() }
-                            });
-                            resolve();
-                        }
-                    });
-                    setTimeout(() => reject(new Error('Timeout')), 8000);
+                // Use the existing active channel to send the answer
+                await channel.send({
+                    type: 'broadcast',
+                    event: 'answer',
+                    payload: { name: studentName, answer: answer, timestamp: Date.now() }
                 });
-
-                // Cleanup
-                supabaseClient.removeChannel(sendChannel);
 
                 // Show success
                 showStep('step-done');
