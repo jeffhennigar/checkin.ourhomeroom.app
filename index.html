@@ -601,6 +601,7 @@
         let currentConfig = { type: 'text', question: '', options: [], isActive: false, isStarted: false };
         let selectedMcAnswer = '';
         let hasReceivedConfig = false;
+        let isPresenceTracked = false;
 
         // --- Check URL for pre-filled code ---
         const urlParams = new URLSearchParams(window.location.search);
@@ -747,6 +748,20 @@
             studentName = name;
             localStorage.setItem('homeroom_student_name', name);
 
+            // Track presence once we have a name (wrap in async to ensure connection)
+            const trackPresence = async () => {
+                if (channel && !isPresenceTracked) {
+                    try {
+                        const status = await channel.track({ name: studentName, joined_at: new Date().toISOString() });
+                        if (status === 'ok') isPresenceTracked = true;
+                    } catch (e) {
+                        console.error("Failed to track presence", e);
+                    }
+                }
+            };
+
+            trackPresence();
+
             // If session is already started, show it
             if (currentConfig.isActive && currentConfig.isStarted && currentConfig.question) {
                 showQuestion();
@@ -759,11 +774,6 @@
                     subtitle.textContent = "Waiting for your teacher to send the question...";
                 }
                 showStep('step-waiting');
-
-                // Track presence once we have a name and are in the lobby/waiting
-                if (channel) {
-                    channel.track({ name: studentName, joined_at: new Date().toISOString() });
-                }
             }
         }
 
