@@ -701,26 +701,30 @@
                     // Sync presence
                 });
 
-                await channel.subscribe();
+                // Await successful subscription before proceeding
+                await new Promise((resolve, reject) => {
+                    channel.subscribe((status) => {
+                        if (status === 'SUBSCRIBED') {
+                            resolve();
+                        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                            reject(new Error(`Subscription failed: ${status}`));
+                        }
+                    });
+                });
 
-                // Wait up to 6 seconds for a config broadcast
+                // Wait up to 3 seconds for an initial config broadcast, to pre-load state if available
                 await new Promise((resolve) => {
                     const checkInterval = setInterval(() => {
                         if (hasReceivedConfig) {
                             clearInterval(checkInterval);
                             resolve();
                         }
-                    }, 300);
+                    }, 200);
                     setTimeout(() => {
                         clearInterval(checkInterval);
                         resolve();
-                    }, 6000);
+                    }, 3000);
                 });
-
-                if (!hasReceivedConfig) {
-                    // No config received — might still be valid, teacher just hasn't broadcast yet
-                    // Let them through anyway
-                }
 
                 btn.disabled = false;
                 btn.innerHTML = 'Join →';
@@ -748,7 +752,7 @@
             studentName = name;
             localStorage.setItem('homeroom_student_name', name);
 
-            // Track presence once we have a name (wrap in async to ensure connection)
+            // Track presence once we have a name. We are guaranteed to be subscribed here.
             const trackPresence = async () => {
                 if (channel && !isPresenceTracked) {
                     try {
