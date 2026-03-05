@@ -725,18 +725,18 @@
                     });
                 });
 
-                // Wait up to 3 seconds for an initial config broadcast, to pre-load state if available
+                // Wait up to 1.5 seconds for an initial config broadcast, to pre-load state if available
                 await new Promise((resolve) => {
                     const checkInterval = setInterval(() => {
                         if (hasReceivedConfig) {
                             clearInterval(checkInterval);
                             resolve();
                         }
-                    }, 200);
+                    }, 100);
                     setTimeout(() => {
                         clearInterval(checkInterval);
                         resolve();
-                    }, 3000);
+                    }, 1500);
                 });
 
                 btn.disabled = false;
