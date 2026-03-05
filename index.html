@@ -862,8 +862,10 @@
             } catch (err) {
                 btn.disabled = false;
                 btn.innerHTML = 'Send Answer 🎯';
-                showError('error-answer', 'Failed to send. Please try again.');
+                showError('error-answer', `Failed to send (${err.message}). Please try again.`);
                 console.error('Submit error:', err);
+                const debugEl = document.getElementById('debug-status');
+                if (debugEl) debugEl.textContent = `Send Error: ${err.message}`;
             }
         }
 
