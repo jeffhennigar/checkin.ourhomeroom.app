@@ -662,7 +662,7 @@
 
         // --- STEP 1: Join Session ---
         async function joinSession() {
-            const code = document.getElementById('code-input').value.trim().toLowerCase();
+            const code = document.getElementById('code-input').value.trim().toUpperCase();
             if (!code) {
                 showError('error-code', 'Please enter a class code');
                 return;
