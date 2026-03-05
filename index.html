@@ -587,6 +587,16 @@
         </div>
     </div>
 
+    <!-- Debug Panel -->
+    <div id="debug-panel"
+        style="position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.8); color: #00ff00; padding: 10px; font-family: monospace; font-size: 10px; border-radius: 8px; z-index: 9999; max-width: 300px; word-wrap: break-word; pointer-events: none;">
+        <div><strong>Status:</strong> <span id="debug-status">Disconnected</span></div>
+        <div><strong>Presence:</strong> <span id="debug-presence">Not Tracked</span></div>
+        <div><strong>Config:</strong>
+            <pre id="debug-config" style="margin: 5px 0 0 0; white-space: pre-wrap; font-size: 9px;"></pre>
+        </div>
+    </div>
+
     <script>
         // --- Supabase Setup ---
         const supabaseClient = window.supabase.createClient(
@@ -672,6 +682,7 @@
                 channel.on('broadcast', { event: 'config' }, (payload) => {
                     hasReceivedConfig = true;
                     currentConfig = payload.payload;
+                    document.getElementById('debug-config').textContent = JSON.stringify(currentConfig, null, 2);
 
                     // Update waiting subtitle if state changes while in waiting
                     if (document.getElementById('step-waiting').classList.contains('active')) {
@@ -702,8 +713,10 @@
                 });
 
                 // Await successful subscription before proceeding
+                document.getElementById('debug-status').textContent = 'Connecting...';
                 await new Promise((resolve, reject) => {
                     channel.subscribe((status) => {
+                        document.getElementById('debug-status').textContent = status;
                         if (status === 'SUBSCRIBED') {
                             resolve();
                         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
@@ -756,9 +769,18 @@
             const trackPresence = async () => {
                 if (channel && !isPresenceTracked) {
                     try {
+                        document.getElementById('debug-presence').textContent = 'Tracking...';
                         const status = await channel.track({ name: studentName, joined_at: new Date().toISOString() });
-                        if (status === 'ok') isPresenceTracked = true;
+                        if (status === 'ok') {
+                            isPresenceTracked = true;
+                            document.getElementById('debug-presence').textContent = 'Tracked OK';
+                            console.log("Presence tracked successfully.");
+                        } else {
+                            document.getElementById('debug-presence').textContent = `Error: ${status}`;
+                            console.warn("Presence tracking returned:", status);
+                        }
                     } catch (e) {
+                        document.getElementById('debug-presence').textContent = `Fail: ${e.message}`;
                         console.error("Failed to track presence", e);
                     }
                 }
