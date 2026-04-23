@@ -613,6 +613,16 @@
         let hasReceivedConfig = false;
         let isPresenceTracked = false;
 
+        // --- DOM Elements Cache ---
+        const ALL_STEPS = document.querySelectorAll('.step');
+        const DOM_STEPS = {
+            'step-code': document.getElementById('step-code'),
+            'step-name': document.getElementById('step-name'),
+            'step-waiting': document.getElementById('step-waiting'),
+            'step-question': document.getElementById('step-question'),
+            'step-done': document.getElementById('step-done')
+        };
+
         // --- Check URL for pre-filled code ---
         const urlParams = new URLSearchParams(window.location.search);
         const prefilledCode = urlParams.get('code');
@@ -644,8 +654,8 @@
 
         // --- Step Management ---
         function showStep(stepId) {
-            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-            const step = document.getElementById(stepId);
+            ALL_STEPS.forEach(s => s.classList.remove('active'));
+            const step = DOM_STEPS[stepId];
             // Force re-animation
             step.style.animation = 'none';
             step.offsetHeight; // trigger reflow
