@@ -708,10 +708,6 @@
                     }
                 });
 
-                channel.on('presence', { event: 'sync' }, () => {
-                    // Sync presence
-                });
-
                 // Await successful subscription before proceeding
                 document.getElementById('debug-status').textContent = 'Connecting...';
                 await new Promise((resolve, reject) => {
