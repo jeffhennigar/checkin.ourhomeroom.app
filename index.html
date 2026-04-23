@@ -499,6 +499,28 @@
                 letter-spacing: 6px;
             }
         }
+
+        #debug-panel {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: #00ff00;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 10px;
+            border-radius: 8px;
+            z-index: 9999;
+            max-width: 300px;
+            word-wrap: break-word;
+            pointer-events: none;
+        }
+
+        #debug-config {
+            margin: 5px 0 0 0;
+            white-space: pre-wrap;
+            font-size: 9px;
+        }
     </style>
 </head>
 
@@ -588,12 +610,11 @@
     </div>
 
     <!-- Debug Panel -->
-    <div id="debug-panel"
-        style="position: fixed; bottom: 10px; right: 10px; background: rgba(0,0,0,0.8); color: #00ff00; padding: 10px; font-family: monospace; font-size: 10px; border-radius: 8px; z-index: 9999; max-width: 300px; word-wrap: break-word; pointer-events: none;">
+    <div id="debug-panel">
         <div><strong>Status:</strong> <span id="debug-status">Disconnected</span></div>
         <div><strong>Presence:</strong> <span id="debug-presence">Not Tracked</span></div>
         <div><strong>Config:</strong>
-            <pre id="debug-config" style="margin: 5px 0 0 0; white-space: pre-wrap; font-size: 9px;"></pre>
+            <pre id="debug-config"></pre>
         </div>
     </div>
 
