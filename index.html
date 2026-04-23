@@ -673,31 +673,6 @@
     </div>
 
     <script>
-      // --- DOM Elements Cache ---
-      const domElements = {
-        answerText: document.getElementById("answer-text"),
-        btnJoin: document.getElementById("btn-join"),
-        btnSubmit: document.getElementById("btn-submit"),
-        codeInput: document.getElementById("code-input"),
-        debugConfig: document.getElementById("debug-config"),
-        debugPresence: document.getElementById("debug-presence"),
-        debugStatus: document.getElementById("debug-status"),
-        greetingText: document.getElementById("greeting-text"),
-        mcAnswerArea: document.getElementById("mc-answer-area"),
-        nameInput: document.getElementById("name-input"),
-        questionDisplay: document.getElementById("question-display"),
-        questionHeading: document.getElementById("question-heading"),
-        stepCode: document.getElementById("step-code"),
-        stepName: document.getElementById("step-name"),
-        stepWaiting: document.getElementById("step-waiting"),
-        stepQuestion: document.getElementById("step-question"),
-        stepDone: document.getElementById("step-done"),
-        textAnswerArea: document.getElementById("text-answer-area"),
-        errorCode: document.getElementById("error-code"),
-        errorName: document.getElementById("error-name"),
-        errorAnswer: document.getElementById("error-answer"),
-      };
-
       // --- Supabase Setup ---
       const supabaseClient = window.supabase.createClient(
         "https://lguewieabkrjgsobufjd.supabase.co",
@@ -718,6 +693,34 @@
       let selectedMcAnswer = "";
       let hasReceivedConfig = false;
       let isPresenceTracked = false;
+
+      // --- DOM Elements Cache ---
+      const ALL_STEPS = document.querySelectorAll(".step");
+      const domElements = {
+        answerText: document.getElementById("answer-text"),
+        btnJoin: document.getElementById("btn-join"),
+        btnSubmit: document.getElementById("btn-submit"),
+        codeInput: document.getElementById("code-input"),
+        debugConfig: document.getElementById("debug-config"),
+        debugPresence: document.getElementById("debug-presence"),
+        debugStatus: document.getElementById("debug-status"),
+        greetingText: document.getElementById("greeting-text"),
+        mcAnswerArea: document.getElementById("mc-answer-area"),
+        nameInput: document.getElementById("name-input"),
+        questionDisplay: document.getElementById("question-display"),
+        questionHeading: document.getElementById("question-heading"),
+        textAnswerArea: document.getElementById("text-answer-area"),
+        errorCode: document.getElementById("error-code"),
+        errorName: document.getElementById("error-name"),
+        errorAnswer: document.getElementById("error-answer"),
+      };
+      const DOM_STEPS = {
+        "step-code": document.getElementById("step-code"),
+        "step-name": document.getElementById("step-name"),
+        "step-waiting": document.getElementById("step-waiting"),
+        "step-question": document.getElementById("step-question"),
+        "step-done": document.getElementById("step-done"),
+      };
 
       // --- Check URL for pre-filled code ---
       const urlParams = new URLSearchParams(window.location.search);
@@ -753,14 +756,8 @@
 
       // --- Step Management ---
       function showStep(stepId) {
-        document
-          .querySelectorAll(".step")
-          .forEach((s) => s.classList.remove("active"));
-        const camelCaseId = stepId.replace(/-([a-z])/g, (g) =>
-          g[1].toUpperCase(),
-        );
-        const step =
-          domElements[camelCaseId] || document.getElementById(stepId);
+        ALL_STEPS.forEach((s) => s.classList.remove("active"));
+        const step = DOM_STEPS[stepId];
         // Force re-animation
         step.style.animation = "none";
         step.offsetHeight; // trigger reflow
@@ -805,7 +802,7 @@
             );
 
             // Update waiting subtitle if state changes while in waiting
-            if (domElements.stepWaiting.classList.contains("active")) {
+            if (DOM_STEPS["step-waiting"].classList.contains("active")) {
               const subtitle = document.querySelector(
                 "#step-waiting .subtitle",
               );
@@ -820,7 +817,7 @@
 
             // If student is on waiting screen and session is now started, show it
             if (
-              domElements.stepWaiting.classList.contains("active") &&
+              DOM_STEPS["step-waiting"].classList.contains("active") &&
               currentConfig.isActive &&
               currentConfig.isStarted &&
               currentConfig.question
@@ -830,7 +827,7 @@
 
             // If session ends, show a message or reset
             if (!currentConfig.isActive && hasReceivedConfig) {
-              if (!domElements.stepCode.classList.contains("active")) {
+              if (!DOM_STEPS["step-code"].classList.contains("active")) {
                 showError("error-code", "The teacher has ended this session.");
                 showStep("step-code");
               }
