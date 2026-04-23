@@ -613,32 +613,52 @@
         let hasReceivedConfig = false;
         let isPresenceTracked = false;
 
+        // --- Elements ---
+        const elCodeInput = document.getElementById('code-input');
+        const elNameInput = document.getElementById('name-input');
+        const elAnswerText = document.getElementById('answer-text');
+        const elBtnJoin = document.getElementById('btn-join');
+        const elBtnSubmit = document.getElementById('btn-submit');
+        const elGreetingText = document.getElementById('greeting-text');
+        const elQuestionDisplay = document.getElementById('question-display');
+        const elQuestionHeading = document.getElementById('question-heading');
+        const elTextAnswerArea = document.getElementById('text-answer-area');
+        const elMcAnswerArea = document.getElementById('mc-answer-area');
+        const elDebugConfig = document.getElementById('debug-config');
+        const elDebugStatus = document.getElementById('debug-status');
+        const elDebugPresence = document.getElementById('debug-presence');
+        const elErrorCode = document.getElementById('error-code');
+        const elErrorName = document.getElementById('error-name');
+        const elErrorAnswer = document.getElementById('error-answer');
+        const elStepWaiting = document.getElementById('step-waiting');
+        const elStepCode = document.getElementById('step-code');
+
         // --- Check URL for pre-filled code ---
         const urlParams = new URLSearchParams(window.location.search);
         const prefilledCode = urlParams.get('code');
         if (prefilledCode) {
-            document.getElementById('code-input').value = prefilledCode.toUpperCase();
+            elCodeInput.value = prefilledCode.toUpperCase();
         }
 
         // --- Load saved name ---
         const savedName = localStorage.getItem('homeroom_student_name');
         if (savedName) {
-            document.getElementById('name-input').value = savedName;
+            elNameInput.value = savedName;
         }
 
         // --- Enter key handlers ---
-        document.getElementById('code-input').addEventListener('keydown', (e) => {
+        elCodeInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') joinSession();
         });
-        document.getElementById('name-input').addEventListener('keydown', (e) => {
+        elNameInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') submitName();
         });
-        document.getElementById('answer-text').addEventListener('keydown', (e) => {
+        elAnswerText.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitAnswer(); }
         });
 
         // --- Auto-uppercase code input ---
-        document.getElementById('code-input').addEventListener('input', (e) => {
+        elCodeInput.addEventListener('input', (e) => {
             e.target.value = e.target.value.toUpperCase();
         });
 
@@ -654,7 +674,12 @@
         }
 
         function showError(id, msg) {
-            const el = document.getElementById(id);
+            let el;
+            if (id === 'error-code') el = elErrorCode;
+            else if (id === 'error-name') el = elErrorName;
+            else if (id === 'error-answer') el = elErrorAnswer;
+            else el = document.getElementById(id);
+
             el.textContent = msg;
             el.classList.add('visible');
             setTimeout(() => el.classList.remove('visible'), 5000);
@@ -662,15 +687,14 @@
 
         // --- STEP 1: Join Session ---
         async function joinSession() {
-            const code = document.getElementById('code-input').value.trim().toUpperCase();
+            const code = elCodeInput.value.trim().toUpperCase();
             if (!code) {
                 showError('error-code', 'Please enter a class code');
                 return;
             }
 
-            const btn = document.getElementById('btn-join');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner"></span> Connecting...';
+            elBtnJoin.disabled = true;
+            elBtnJoin.innerHTML = '<span class="spinner"></span> Connecting...';
 
             sessionCode = code;
 
@@ -682,11 +706,11 @@
                 channel.on('broadcast', { event: 'config' }, (payload) => {
                     hasReceivedConfig = true;
                     currentConfig = payload.payload;
-                    document.getElementById('debug-config').textContent = JSON.stringify(currentConfig, null, 2);
+                    elDebugConfig.textContent = JSON.stringify(currentConfig, null, 2);
 
                     // Update waiting subtitle if state changes while in waiting
-                    if (document.getElementById('step-waiting').classList.contains('active')) {
-                        const subtitle = document.querySelector('#step-waiting .subtitle');
+                    if (elStepWaiting.classList.contains('active')) {
+                        const subtitle = elStepWaiting.querySelector('.subtitle');
                         if (currentConfig.isActive && !currentConfig.isStarted) {
                             subtitle.textContent = "Waiting for the teacher to start the session...";
                         } else {
@@ -695,13 +719,13 @@
                     }
 
                     // If student is on waiting screen and session is now started, show it
-                    if (document.getElementById('step-waiting').classList.contains('active') && currentConfig.isActive && currentConfig.isStarted && currentConfig.question) {
+                    if (elStepWaiting.classList.contains('active') && currentConfig.isActive && currentConfig.isStarted && currentConfig.question) {
                         showQuestion();
                     }
 
                     // If session ends, show a message or reset
                     if (!currentConfig.isActive && hasReceivedConfig) {
-                        if (!document.getElementById('step-code').classList.contains('active')) {
+                        if (!elStepCode.classList.contains('active')) {
                             showError('error-code', 'The teacher has ended this session.');
                             showStep('step-code');
                         }
@@ -713,10 +737,10 @@
                 });
 
                 // Await successful subscription before proceeding
-                document.getElementById('debug-status').textContent = 'Connecting...';
+                elDebugStatus.textContent = 'Connecting...';
                 await new Promise((resolve, reject) => {
                     channel.subscribe((status) => {
-                        document.getElementById('debug-status').textContent = status;
+                        elDebugStatus.textContent = status;
                         if (status === 'SUBSCRIBED') {
                             resolve();
                         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
@@ -739,16 +763,16 @@
                     }, 1500);
                 });
 
-                btn.disabled = false;
-                btn.innerHTML = 'Join →';
+                elBtnJoin.disabled = false;
+                elBtnJoin.innerHTML = 'Join →';
 
                 // Move to name step
                 showStep('step-name');
-                document.getElementById('name-input').focus();
+                elNameInput.focus();
 
             } catch (err) {
-                btn.disabled = false;
-                btn.innerHTML = 'Join →';
+                elBtnJoin.disabled = false;
+                elBtnJoin.innerHTML = 'Join →';
                 showError('error-code', 'Connection error. Please try again.');
                 console.error('Join error:', err);
             }
@@ -756,7 +780,7 @@
 
         // --- STEP 2: Submit Name ---
         function submitName() {
-            const name = document.getElementById('name-input').value.trim();
+            const name = elNameInput.value.trim();
             if (!name) {
                 showError('error-name', 'Please enter your first name');
                 return;
@@ -769,18 +793,18 @@
             const trackPresence = async () => {
                 if (channel && !isPresenceTracked) {
                     try {
-                        document.getElementById('debug-presence').textContent = 'Tracking...';
+                        elDebugPresence.textContent = 'Tracking...';
                         const status = await channel.track({ name: studentName, joined_at: new Date().toISOString() });
                         if (status === 'ok') {
                             isPresenceTracked = true;
-                            document.getElementById('debug-presence').textContent = 'Tracked OK';
+                            elDebugPresence.textContent = 'Tracked OK';
                             console.log("Presence tracked successfully.");
                         } else {
-                            document.getElementById('debug-presence').textContent = `Error: ${status}`;
+                            elDebugPresence.textContent = `Error: ${status}`;
                             console.warn("Presence tracking returned:", status);
                         }
                     } catch (e) {
-                        document.getElementById('debug-presence').textContent = `Fail: ${e.message}`;
+                        elDebugPresence.textContent = `Fail: ${e.message}`;
                         console.error("Failed to track presence", e);
                     }
                 }
@@ -793,7 +817,7 @@
                 showQuestion();
             } else {
                 // Show waiting screen
-                const subtitle = document.querySelector('#step-waiting .subtitle');
+                const subtitle = elStepWaiting.querySelector('.subtitle');
                 if (currentConfig.isActive && !currentConfig.isStarted) {
                     subtitle.textContent = "Waiting for the teacher to start the session...";
                 } else {
@@ -805,15 +829,14 @@
 
         // --- STEP 3: Show Question ---
         function showQuestion() {
-            document.getElementById('greeting-text').textContent = `Hi ${studentName}! 👋`;
-            document.getElementById('question-display').textContent = currentConfig.question;
-            document.getElementById('question-heading').textContent = currentConfig.type === 'mc' ? 'Pick One' : 'Your Question';
+            elGreetingText.textContent = `Hi ${studentName}! 👋`;
+            elQuestionDisplay.textContent = currentConfig.question;
+            elQuestionHeading.textContent = currentConfig.type === 'mc' ? 'Pick One' : 'Your Question';
 
             if (currentConfig.type === 'mc') {
-                document.getElementById('text-answer-area').style.display = 'none';
-                const mcArea = document.getElementById('mc-answer-area');
-                mcArea.style.display = 'flex';
-                mcArea.innerHTML = '';
+                elTextAnswerArea.style.display = 'none';
+                elMcAnswerArea.style.display = 'flex';
+                elMcAnswerArea.innerHTML = '';
                 selectedMcAnswer = '';
 
                 (currentConfig.options || []).forEach((opt, i) => {
@@ -822,15 +845,15 @@
                     btn.innerHTML = `<span class="letter">${String.fromCharCode(65 + i)}</span>${opt}`;
                     btn.onclick = () => {
                         selectedMcAnswer = opt;
-                        mcArea.querySelectorAll('.mc-option').forEach(b => b.classList.remove('selected'));
+                        elMcAnswerArea.querySelectorAll('.mc-option').forEach(b => b.classList.remove('selected'));
                         btn.classList.add('selected');
                     };
-                    mcArea.appendChild(btn);
+                    elMcAnswerArea.appendChild(btn);
                 });
             } else {
-                document.getElementById('text-answer-area').style.display = 'block';
-                document.getElementById('mc-answer-area').style.display = 'none';
-                document.getElementById('answer-text').value = '';
+                elTextAnswerArea.style.display = 'block';
+                elMcAnswerArea.style.display = 'none';
+                elAnswerText.value = '';
             }
 
             showStep('step-question');
@@ -838,16 +861,15 @@
 
         // --- STEP 4: Submit Answer ---
         async function submitAnswer() {
-            const answer = currentConfig.type === 'mc' ? selectedMcAnswer : document.getElementById('answer-text').value.trim();
+            const answer = currentConfig.type === 'mc' ? selectedMcAnswer : elAnswerText.value.trim();
 
             if (!answer) {
                 showError('error-answer', currentConfig.type === 'mc' ? 'Please select an answer' : 'Please type your answer');
                 return;
             }
 
-            const btn = document.getElementById('btn-submit');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner"></span> Sending...';
+            elBtnSubmit.disabled = true;
+            elBtnSubmit.innerHTML = '<span class="spinner"></span> Sending...';
 
             try {
                 // Use the existing active channel to send the answer
@@ -860,22 +882,20 @@
                 // Show success
                 showStep('step-done');
             } catch (err) {
-                btn.disabled = false;
-                btn.innerHTML = 'Send Answer 🎯';
+                elBtnSubmit.disabled = false;
+                elBtnSubmit.innerHTML = 'Send Answer 🎯';
                 showError('error-answer', `Failed to send (${err.message}). Please try again.`);
                 console.error('Submit error:', err);
-                const debugEl = document.getElementById('debug-status');
-                if (debugEl) debugEl.textContent = `Send Error: ${err.message}`;
+                if (elDebugStatus) elDebugStatus.textContent = `Send Error: ${err.message}`;
             }
         }
 
         // --- Reset for another answer ---
         function resetForAnother() {
             selectedMcAnswer = '';
-            document.getElementById('answer-text').value = '';
-            const btn = document.getElementById('btn-submit');
-            btn.disabled = false;
-            btn.innerHTML = 'Send Answer 🎯';
+            elAnswerText.value = '';
+            elBtnSubmit.disabled = false;
+            elBtnSubmit.innerHTML = 'Send Answer 🎯';
 
             // If there's still an active question, go back to it
             if (currentConfig.isActive && currentConfig.question) {
