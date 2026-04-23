@@ -750,7 +750,6 @@
                 btn.disabled = false;
                 btn.innerHTML = 'Join →';
                 showError('error-code', 'Connection error. Please try again.');
-                console.error('Join error:', err);
             }
         }
 
@@ -774,14 +773,11 @@
                         if (status === 'ok') {
                             isPresenceTracked = true;
                             document.getElementById('debug-presence').textContent = 'Tracked OK';
-                            console.log("Presence tracked successfully.");
                         } else {
                             document.getElementById('debug-presence').textContent = `Error: ${status}`;
-                            console.warn("Presence tracking returned:", status);
                         }
                     } catch (e) {
                         document.getElementById('debug-presence').textContent = `Fail: ${e.message}`;
-                        console.error("Failed to track presence", e);
                     }
                 }
             };
@@ -863,7 +859,6 @@
                 btn.disabled = false;
                 btn.innerHTML = 'Send Answer 🎯';
                 showError('error-answer', `Failed to send (${err.message}). Please try again.`);
-                console.error('Submit error:', err);
                 const debugEl = document.getElementById('debug-status');
                 if (debugEl) debugEl.textContent = `Send Error: ${err.message}`;
             }
