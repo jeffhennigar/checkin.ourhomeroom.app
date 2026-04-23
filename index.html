@@ -670,7 +670,10 @@
 
             const btn = document.getElementById('btn-join');
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner"></span> Connecting...';
+            btn.textContent = ' Connecting...';
+            const spinner = document.createElement('span');
+            spinner.className = 'spinner';
+            btn.prepend(spinner);
 
             sessionCode = code;
 
@@ -740,7 +743,7 @@
                 });
 
                 btn.disabled = false;
-                btn.innerHTML = 'Join →';
+                btn.textContent = 'Join →';
 
                 // Move to name step
                 showStep('step-name');
@@ -748,7 +751,7 @@
 
             } catch (err) {
                 btn.disabled = false;
-                btn.innerHTML = 'Join →';
+                btn.textContent = 'Join →';
                 showError('error-code', 'Connection error. Please try again.');
                 console.error('Join error:', err);
             }
@@ -819,7 +822,13 @@
                 (currentConfig.options || []).forEach((opt, i) => {
                     const btn = document.createElement('button');
                     btn.className = 'mc-option';
-                    btn.innerHTML = `<span class="letter">${String.fromCharCode(65 + i)}</span>${opt}`;
+
+                    const span = document.createElement('span');
+                    span.className = 'letter';
+                    span.textContent = String.fromCharCode(65 + i);
+                    btn.appendChild(span);
+                    btn.appendChild(document.createTextNode(opt));
+
                     btn.onclick = () => {
                         selectedMcAnswer = opt;
                         mcArea.querySelectorAll('.mc-option').forEach(b => b.classList.remove('selected'));
@@ -847,7 +856,10 @@
 
             const btn = document.getElementById('btn-submit');
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner"></span> Sending...';
+            btn.textContent = ' Sending...';
+            const spinner = document.createElement('span');
+            spinner.className = 'spinner';
+            btn.prepend(spinner);
 
             try {
                 // Use the existing active channel to send the answer
@@ -861,7 +873,7 @@
                 showStep('step-done');
             } catch (err) {
                 btn.disabled = false;
-                btn.innerHTML = 'Send Answer 🎯';
+                btn.textContent = 'Send Answer 🎯';
                 showError('error-answer', `Failed to send (${err.message}). Please try again.`);
                 console.error('Submit error:', err);
                 const debugEl = document.getElementById('debug-status');
@@ -875,7 +887,7 @@
             document.getElementById('answer-text').value = '';
             const btn = document.getElementById('btn-submit');
             btn.disabled = false;
-            btn.innerHTML = 'Send Answer 🎯';
+            btn.textContent = 'Send Answer 🎯';
 
             // If there's still an active question, go back to it
             if (currentConfig.isActive && currentConfig.question) {
