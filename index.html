@@ -604,6 +604,25 @@
             'sb_publishable_5GO3bYshKEh_MWebMvDCiQ_Ti7ivGWO'
         );
 
+        // --- DOM Elements ---
+        const elements = {
+            codeInput: document.getElementById('code-input'),
+            nameInput: document.getElementById('name-input'),
+            answerText: document.getElementById('answer-text'),
+            btnJoin: document.getElementById('btn-join'),
+            btnSubmit: document.getElementById('btn-submit'),
+            debugConfig: document.getElementById('debug-config'),
+            stepWaiting: document.getElementById('step-waiting'),
+            stepCode: document.getElementById('step-code'),
+            debugStatus: document.getElementById('debug-status'),
+            debugPresence: document.getElementById('debug-presence'),
+            greetingText: document.getElementById('greeting-text'),
+            questionDisplay: document.getElementById('question-display'),
+            questionHeading: document.getElementById('question-heading'),
+            textAnswerArea: document.getElementById('text-answer-area'),
+            mcAnswerArea: document.getElementById('mc-answer-area')
+        };
+
         // --- State ---
         let sessionCode = '';
         let studentName = '';
@@ -617,28 +636,28 @@
         const urlParams = new URLSearchParams(window.location.search);
         const prefilledCode = urlParams.get('code');
         if (prefilledCode) {
-            document.getElementById('code-input').value = prefilledCode.toUpperCase();
+            elements.codeInput.value = prefilledCode.toUpperCase();
         }
 
         // --- Load saved name ---
         const savedName = localStorage.getItem('homeroom_student_name');
         if (savedName) {
-            document.getElementById('name-input').value = savedName;
+            elements.nameInput.value = savedName;
         }
 
         // --- Enter key handlers ---
-        document.getElementById('code-input').addEventListener('keydown', (e) => {
+        elements.codeInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') joinSession();
         });
-        document.getElementById('name-input').addEventListener('keydown', (e) => {
+        elements.nameInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') submitName();
         });
-        document.getElementById('answer-text').addEventListener('keydown', (e) => {
+        elements.answerText.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitAnswer(); }
         });
 
         // --- Auto-uppercase code input ---
-        document.getElementById('code-input').addEventListener('input', (e) => {
+        elements.codeInput.addEventListener('input', (e) => {
             e.target.value = e.target.value.toUpperCase();
         });
 
@@ -662,13 +681,13 @@
 
         // --- STEP 1: Join Session ---
         async function joinSession() {
-            const code = document.getElementById('code-input').value.trim().toUpperCase();
+            const code = elements.codeInput.value.trim().toUpperCase();
             if (!code) {
                 showError('error-code', 'Please enter a class code');
                 return;
             }
 
-            const btn = document.getElementById('btn-join');
+            const btn = elements.btnJoin;
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner"></span> Connecting...';
 
@@ -682,10 +701,10 @@
                 channel.on('broadcast', { event: 'config' }, (payload) => {
                     hasReceivedConfig = true;
                     currentConfig = payload.payload;
-                    document.getElementById('debug-config').textContent = JSON.stringify(currentConfig, null, 2);
+                    elements.debugConfig.textContent = JSON.stringify(currentConfig, null, 2);
 
                     // Update waiting subtitle if state changes while in waiting
-                    if (document.getElementById('step-waiting').classList.contains('active')) {
+                    if (elements.stepWaiting.classList.contains('active')) {
                         const subtitle = document.querySelector('#step-waiting .subtitle');
                         if (currentConfig.isActive && !currentConfig.isStarted) {
                             subtitle.textContent = "Waiting for the teacher to start the session...";
@@ -695,13 +714,13 @@
                     }
 
                     // If student is on waiting screen and session is now started, show it
-                    if (document.getElementById('step-waiting').classList.contains('active') && currentConfig.isActive && currentConfig.isStarted && currentConfig.question) {
+                    if (elements.stepWaiting.classList.contains('active') && currentConfig.isActive && currentConfig.isStarted && currentConfig.question) {
                         showQuestion();
                     }
 
                     // If session ends, show a message or reset
                     if (!currentConfig.isActive && hasReceivedConfig) {
-                        if (!document.getElementById('step-code').classList.contains('active')) {
+                        if (!elements.stepCode.classList.contains('active')) {
                             showError('error-code', 'The teacher has ended this session.');
                             showStep('step-code');
                         }
@@ -713,10 +732,10 @@
                 });
 
                 // Await successful subscription before proceeding
-                document.getElementById('debug-status').textContent = 'Connecting...';
+                elements.debugStatus.textContent = 'Connecting...';
                 await new Promise((resolve, reject) => {
                     channel.subscribe((status) => {
-                        document.getElementById('debug-status').textContent = status;
+                        elements.debugStatus.textContent = status;
                         if (status === 'SUBSCRIBED') {
                             resolve();
                         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
@@ -744,19 +763,18 @@
 
                 // Move to name step
                 showStep('step-name');
-                document.getElementById('name-input').focus();
+                elements.nameInput.focus();
 
             } catch (err) {
                 btn.disabled = false;
                 btn.innerHTML = 'Join →';
                 showError('error-code', 'Connection error. Please try again.');
-                console.error('Join error:', err);
             }
         }
 
         // --- STEP 2: Submit Name ---
         function submitName() {
-            const name = document.getElementById('name-input').value.trim();
+            const name = elements.nameInput.value.trim();
             if (!name) {
                 showError('error-name', 'Please enter your first name');
                 return;
@@ -769,19 +787,16 @@
             const trackPresence = async () => {
                 if (channel && !isPresenceTracked) {
                     try {
-                        document.getElementById('debug-presence').textContent = 'Tracking...';
+                        elements.debugPresence.textContent = 'Tracking...';
                         const status = await channel.track({ name: studentName, joined_at: new Date().toISOString() });
                         if (status === 'ok') {
                             isPresenceTracked = true;
-                            document.getElementById('debug-presence').textContent = 'Tracked OK';
-                            console.log("Presence tracked successfully.");
+                            elements.debugPresence.textContent = 'Tracked OK';
                         } else {
-                            document.getElementById('debug-presence').textContent = `Error: ${status}`;
-                            console.warn("Presence tracking returned:", status);
+                            elements.debugPresence.textContent = `Error: ${status}`;
                         }
                     } catch (e) {
-                        document.getElementById('debug-presence').textContent = `Fail: ${e.message}`;
-                        console.error("Failed to track presence", e);
+                        elements.debugPresence.textContent = `Fail: ${e.message}`;
                     }
                 }
             };
@@ -805,13 +820,13 @@
 
         // --- STEP 3: Show Question ---
         function showQuestion() {
-            document.getElementById('greeting-text').textContent = `Hi ${studentName}! 👋`;
-            document.getElementById('question-display').textContent = currentConfig.question;
-            document.getElementById('question-heading').textContent = currentConfig.type === 'mc' ? 'Pick One' : 'Your Question';
+            elements.greetingText.textContent = `Hi ${studentName}! 👋`;
+            elements.questionDisplay.textContent = currentConfig.question;
+            elements.questionHeading.textContent = currentConfig.type === 'mc' ? 'Pick One' : 'Your Question';
 
             if (currentConfig.type === 'mc') {
-                document.getElementById('text-answer-area').style.display = 'none';
-                const mcArea = document.getElementById('mc-answer-area');
+                elements.textAnswerArea.style.display = 'none';
+                const mcArea = elements.mcAnswerArea;
                 mcArea.style.display = 'flex';
                 mcArea.innerHTML = '';
                 selectedMcAnswer = '';
@@ -819,7 +834,11 @@
                 (currentConfig.options || []).forEach((opt, i) => {
                     const btn = document.createElement('button');
                     btn.className = 'mc-option';
-                    btn.innerHTML = `<span class="letter">${String.fromCharCode(65 + i)}</span>${opt}`;
+                    const span = document.createElement('span');
+                    span.className = 'letter';
+                    span.textContent = String.fromCharCode(65 + i);
+                    btn.appendChild(span);
+                    btn.appendChild(document.createTextNode(opt));
                     btn.onclick = () => {
                         selectedMcAnswer = opt;
                         mcArea.querySelectorAll('.mc-option').forEach(b => b.classList.remove('selected'));
@@ -828,9 +847,9 @@
                     mcArea.appendChild(btn);
                 });
             } else {
-                document.getElementById('text-answer-area').style.display = 'block';
-                document.getElementById('mc-answer-area').style.display = 'none';
-                document.getElementById('answer-text').value = '';
+                elements.textAnswerArea.style.display = 'block';
+                elements.mcAnswerArea.style.display = 'none';
+                elements.answerText.value = '';
             }
 
             showStep('step-question');
@@ -838,14 +857,14 @@
 
         // --- STEP 4: Submit Answer ---
         async function submitAnswer() {
-            const answer = currentConfig.type === 'mc' ? selectedMcAnswer : document.getElementById('answer-text').value.trim();
+            const answer = currentConfig.type === 'mc' ? selectedMcAnswer : elements.answerText.value.trim();
 
             if (!answer) {
                 showError('error-answer', currentConfig.type === 'mc' ? 'Please select an answer' : 'Please type your answer');
                 return;
             }
 
-            const btn = document.getElementById('btn-submit');
+            const btn = elements.btnSubmit;
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner"></span> Sending...';
 
@@ -863,8 +882,7 @@
                 btn.disabled = false;
                 btn.innerHTML = 'Send Answer 🎯';
                 showError('error-answer', `Failed to send (${err.message}). Please try again.`);
-                console.error('Submit error:', err);
-                const debugEl = document.getElementById('debug-status');
+                const debugEl = elements.debugStatus;
                 if (debugEl) debugEl.textContent = `Send Error: ${err.message}`;
             }
         }
@@ -872,8 +890,8 @@
         // --- Reset for another answer ---
         function resetForAnother() {
             selectedMcAnswer = '';
-            document.getElementById('answer-text').value = '';
-            const btn = document.getElementById('btn-submit');
+            elements.answerText.value = '';
+            const btn = elements.btnSubmit;
             btn.disabled = false;
             btn.innerHTML = 'Send Answer 🎯';
 
