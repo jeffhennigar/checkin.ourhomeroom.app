@@ -825,6 +825,7 @@
                 mcArea.style.display = 'flex';
                 mcArea.innerHTML = '';
                 selectedMcAnswer = '';
+                let lastSelectedBtn = null;
 
                 (currentConfig.options || []).forEach((opt, i) => {
                     const btn = document.createElement('button');
@@ -832,8 +833,11 @@
                     btn.innerHTML = `<span class="letter">${String.fromCharCode(65 + i)}</span>${opt}`;
                     btn.onclick = () => {
                         selectedMcAnswer = opt;
-                        mcArea.querySelectorAll('.mc-option').forEach(b => b.classList.remove('selected'));
+                        if (lastSelectedBtn) {
+                            lastSelectedBtn.classList.remove('selected');
+                        }
                         btn.classList.add('selected');
+                        lastSelectedBtn = btn;
                     };
                     mcArea.appendChild(btn);
                 });
