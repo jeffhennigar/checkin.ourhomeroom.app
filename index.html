@@ -670,6 +670,15 @@
             setTimeout(() => el.classList.remove('visible'), 5000);
         }
 
+        function updateWaitingSubtitle() {
+            const subtitle = document.querySelector('#step-waiting .subtitle');
+            if (currentConfig.isActive && !currentConfig.isStarted) {
+                subtitle.textContent = "Waiting for the teacher to start the session...";
+            } else {
+                subtitle.textContent = "Waiting for your teacher to send the question...";
+            }
+        }
+
         // --- STEP 1: Join Session ---
         async function joinSession() {
             const code = document.getElementById('code-input').value.trim().toUpperCase();
@@ -696,12 +705,7 @@
 
                     // Update waiting subtitle if state changes while in waiting
                     if (document.getElementById('step-waiting').classList.contains('active')) {
-                        const subtitle = document.querySelector('#step-waiting .subtitle');
-                        if (currentConfig.isActive && !currentConfig.isStarted) {
-                            subtitle.textContent = "Waiting for the teacher to start the session...";
-                        } else {
-                            subtitle.textContent = "Waiting for your teacher to send the question...";
-                        }
+                        updateWaitingSubtitle();
                     }
 
                     // If student is on waiting screen and session is now started, show it
@@ -803,12 +807,7 @@
                 showQuestion();
             } else {
                 // Show waiting screen
-                const subtitle = document.querySelector('#step-waiting .subtitle');
-                if (currentConfig.isActive && !currentConfig.isStarted) {
-                    subtitle.textContent = "Waiting for the teacher to start the session...";
-                } else {
-                    subtitle.textContent = "Waiting for your teacher to send the question...";
-                }
+                updateWaitingSubtitle();
                 showStep('step-waiting');
             }
         }
